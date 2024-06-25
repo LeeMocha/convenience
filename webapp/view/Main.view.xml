@@ -1,0 +1,105 @@
+<mvc:View controllerName="convenience.controller.Main"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:c="sap.ui.core"
+    xmlns:t="sap.ui.table"
+    height="100%"
+    >
+    <Page id="page" title="Main Page">
+        <content>
+            <Panel >
+            <OverflowToolbar style="Clear">
+                <c:Icon src="sap-icon://building" alt="Brand" size="1.25rem"/>
+                <Title text="브랜드 선택" titleStyle="H3"/>
+                <ToolbarSpacer></ToolbarSpacer>
+                <Button text="지점 생성" press=".onOpenPopoverDialog" type="Default"></Button>
+                <Button text="영업 중지" press=".onStopService" type="Emphasized"></Button>
+            </OverflowToolbar>
+            <VBox >
+            <Select 
+            id="combSelect"
+            width="14rem" 
+            items="{ path: 'combModel>/' }"
+            >
+                <c:Item key="{combModel>CombCode}" text="{combModel>CombBrand}" enabled="{= ${combModel>CombStatus}==='O' ? true : false}"></c:Item>
+            </Select>
+            </VBox>
+            </Panel>
+            
+            <Panel>
+                <t:Table id='headTable'
+                    rows='{headModel>/}'
+                    rowActionCount="1"
+                    sort="{headModel>/StoreName}"
+                    selectionMode="MultiToggle"
+                >
+                    <t:extension>
+                        <OverflowToolbar style="Clear">
+                                    <c:Icon src="sap-icon://home" alt="Chains" size="1.25rem"/>
+                                    <Title text=" 지점" titleStyle="H3"></Title>
+                                    <ToolbarSpacer></ToolbarSpacer>
+                                    <Title text="{= '검색결과 : ' + ${searchModel>/dataLength} +'지점'}" titleStyle="H5" />
+                        </OverflowToolbar>
+                            <FacetFilter
+                            id="facetFilter"
+                            type="Simple"
+                            showReset="true"
+                            showPopoverOKButton="true"
+                            reset="handleFacetFilterReset"
+                            lists="{filterModel>/filters}">
+                            <lists>
+                                <FacetFilterList
+                                    title="{filterModel>type}"
+                                    key="{filterModel>type}"
+                                    mode="MultiSelect"
+                                    listClose="handleListClose"
+                                    items="{
+                                        path: 'filterModel>values',
+                                        templateShareable: false
+                                    }" >
+                                    <items>
+                                        <FacetFilterItem
+                                            text="{filterModel>CombBrand}"
+                                            key="{filterModel>CombCode}"
+                                        />
+                                    </items>
+                                </FacetFilterList>
+                            </lists>
+                        </FacetFilter>
+                    </t:extension>
+                    <t:rowActionTemplate>
+                        <t:RowAction >
+                            <t:RowActionItem type="Navigation" press=".onMove"></t:RowActionItem>
+                        </t:RowAction>
+                    </t:rowActionTemplate>
+                    <t:columns>
+                        <t:Column sortProperty="StoreName" showSortMenuEntry="true">
+                            <Label text="지점명" design="Bold"/>
+                            <t:template>
+                                <Label text="{headModel>StoreName}" />
+                            </t:template>
+                        </t:Column>
+                        <t:Column sortProperty="StoreOwner" showSortMenuEntry="true">
+                            <Label text="지점장" design="Bold"/>
+                            <t:template>
+                                <Label text="{headModel>StoreOwner}" />
+                            </t:template>
+                        </t:Column>
+                        <t:Column sortProperty="StoreDetailloca" showSortMenuEntry="true">
+                            <Label text="지점 상세주소" design="Bold"/>
+                            <t:template>
+                                <Label text="{headModel>StoreDetailloca}" />
+                            </t:template>
+                        </t:Column>
+                        <t:Column sortProperty="StorePhone" showSortMenuEntry="true">
+                            <Label text="전화번호" design="Bold"/>
+                            <t:template>
+                                <Label text="{headModel>StorePhone}" />
+                            </t:template>
+                        </t:Column>
+                    </t:columns>
+                </t:Table>
+            </Panel>
+        </content>
+    </Page>
+</mvc:View>

@@ -1,0 +1,58 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:f="sap.ui.layout.form"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:core="sap.ui.core">
+	<Dialog
+		id="mainDialog"
+		title="지점 등록">
+		<content>
+			<VBox class="sapUiSmallMargin" id="formContainer">
+								<f:SimpleForm id="SimpleFormChangeColumn_twoGroups234"
+					editable="true"
+					layout="ColumnLayout"
+					title="지점 상세 정보"
+					columnsM="2"
+					columnsL="2"
+					columnsXL="2">
+					<f:content>
+						<core:Title text="필수 입력" />
+                        <Label text="브랜드 코드" />
+                        <Input value="{inputModel>/CombCode}" required="true" editable="false" />
+						<Label text="지점장(이름)" />
+						<Input value="{inputModel>/StoreOwner}" required="true" />
+						<Label text="지점 위치" />
+						<Input value="{inputModel>/StoreLoca}" required="true" />
+						<Label text="지점 상세 주소" />
+						<Input value="{inputModel>/StoreDetailloca}" required="true" />
+						<core:Title text="선택 입력" />
+						<Label text="전화 번호" />
+						<Input value="{inputModel>/StorePhone}" />
+					</f:content>
+				</f:SimpleForm>
+			</VBox>
+		</content>
+		<footer>
+			<Toolbar>
+				<content>
+					<Button id="messagePopoverBtn"
+						visible="{= !!${message>/}.length }"
+						icon="{ path: '/', formatter: '.buttonIconFormatter' }"
+						type="{ path: '/', formatter: '.buttonTypeFormatter' }"
+						text="{ path: '/', formatter: '.highestSeverityMessages' }"
+						press=".handleMessagePopoverPress"
+						ariaHasPopup="Dialog" />
+					<ToolbarSpacer />
+					<Button type="Accept"
+						text="지점 등록"
+						press="._generateInvalidUserInput" />
+					<Button id="Reject"
+						text="등록 취소"
+						type="Reject"
+						press="._closeDialog"
+						ariaHasPopup="Dialog" />
+				</content>
+			</Toolbar>
+		</footer>
+	</Dialog>
+</core:FragmentDefinition>
