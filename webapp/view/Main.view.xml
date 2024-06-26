@@ -13,7 +13,7 @@
                 <Title text="브랜드 선택" titleStyle="H3"/>
                 <ToolbarSpacer></ToolbarSpacer>
                 <Button text="지점 생성" press=".onOpenPopoverDialog" type="Default"></Button>
-                <Button text="영업 중지" press=".onStopService" type="Emphasized"></Button>
+                <Button text="브랜드 폐업" press=".onStopService" type="Emphasized"></Button>
             </OverflowToolbar>
             <VBox >
             <Select 

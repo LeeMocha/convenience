@@ -55,8 +55,10 @@
                 <Property Name="Uuid" Type="Edm.Guid" Nullable="false" sap:label="UUID" sap:quickinfo="16 Byte UUID in 16 Bytes (Raw Format)" sap:creatable="false" sap:updatable="false"/>
                 <Property Name="CombCode" Type="Edm.String" MaxLength="10"/>
                 <Property Name="StoreName" Type="Edm.String" MaxLength="100"/>
-                <Property Name="StoreLoca" Type="Edm.String" MaxLength="200"/>
+                <Property Name="StoreOwner" Type="Edm.String" MaxLength="50"/>
+                <Property Name="StoreLoca" Type="Edm.String" MaxLength="100"/>
                 <Property Name="StorePhone" Type="Edm.String" MaxLength="14"/>
+                <Property Name="StoreDetailloca" Type="Edm.String" MaxLength="200"/>
                 <Property Name="Createby" Type="Edm.String" MaxLength="12" sap:display-format="UpperCase" sap:label="사용자 이름"/>
                 <Property Name="Createdat" Type="Edm.DateTimeOffset" Precision="7" sap:label="타임스탬프" sap:quickinfo="긴 형식의 UTC 타임스탬프(YYYYMMDDhhmmssmmmuuun)"/>
                 <Property Name="Lastchangedby" Type="Edm.String" MaxLength="12" sap:display-format="UpperCase" sap:label="사용자 이름"/>

@@ -1,5 +1,3 @@
-# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
-
 specVersion: "3.1"
 metadata:
   name: convenience
@@ -9,14 +7,14 @@ server:
     - name: fiori-tools-proxy
       afterMiddleware: compression
       configuration:
-        ignoreCertError: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
+        ignoreCertError: false
         ui5:
           path:
             - /resources
             - /test-resources
           url: https://ui5.sap.com
         backend:
-          - authenticationType: reentranceTicket # SAML support for vscode
+          - authenticationType: reentranceTicket
             path: /sap
             url: https://my407000-api.s4hana.cloud.sap
             destination: ZAM_DEV_SAML_ASSERTION
@@ -32,7 +30,11 @@ server:
         mountPath: /
         services:
           - urlPath: /sap/opu/odata/sap/YAPI_STORE_LJH_O2
+            generateMockData: true
+            metadataXmlPath: ./webapp/localService/metadata.xml
+            mockdataRootPath: ./webapp/localService/data
+          - urlPath: /sap/opu/odata/sap/YAPI_STORE_LJH_O2/
             metadataPath: ./webapp/localService/metadata.xml
-            mockdataPath: ./webapp/localService/data
+            mockdataPath: ./webapp/localService/mockdata
             generateMockData: true
         annotations: []

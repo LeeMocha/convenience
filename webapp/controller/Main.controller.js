@@ -126,7 +126,7 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
 
 				MessageToast.show(`모든 정보 입력 후 "지점 등록" 버튼을 눌러주십시오.
                 
-                지점 정보 저장 후 품목 선택화면으로 넘어갑니다.
+                지점 정보 저장 후 품목 선택화면으로 넘어갑니다. 
                 `);
 
 				this.createMessagePopover();
