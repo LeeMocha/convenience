@@ -12,8 +12,8 @@
                 <c:Icon src="sap-icon://building" alt="Brand" size="1.25rem"/>
                 <Title text="브랜드 선택" titleStyle="H3"/>
                 <ToolbarSpacer></ToolbarSpacer>
-                <Button text="지점 생성" press=".onOpenPopoverDialog" type="Default"></Button>
-                <Button text="브랜드 폐업" press=".onStopService" type="Emphasized"></Button>
+                <Button text="지점 생성" press=".onOpenPopoverDialog" type="Emphasized" icon="sap-icon://accept"></Button>
+                <Button text="브랜드 폐업" press=".onStopService" type="Negative" icon="sap-icon://high-priority"></Button>
             </OverflowToolbar>
             <VBox >
             <Select 
@@ -25,7 +25,6 @@
             </Select>
             </VBox>
             </Panel>
-            
             <Panel>
                 <t:Table id='headTable'
                     rows='{headModel>/}'
@@ -59,7 +58,7 @@
                                     }" >
                                     <items>
                                         <FacetFilterItem
-                                            text="{filterModel>CombBrand}"
+                                            text="{filterModel>CombCode} {filterModel>CombBrand}"
                                             key="{filterModel>CombCode}"
                                         />
                                     </items>

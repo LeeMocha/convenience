@@ -13,18 +13,16 @@
 	<headerTitle>
 		<ObjectPageDynamicHeaderTitle>
 			<expandedHeading>
-				<m:Title text="{= ${inputModel>/CombCode} + ' ' + ${inputModel>/StoreLoca} + ' '}" wrapping="true"/>
+				<m:Title text="{= ${inputModel>/CombCode} + '-' + ${inputModel>/StoreLoca} + ' '}" wrapping="true"/>
 			</expandedHeading>
 			<snappedHeading>
-				<m:Title text="{= ${inputModel>/CombCode} + ' ' + ${inputModel>/StoreLoca} + ' '}" wrapping="true"/>
+				<m:Title text="{= ${inputModel>/CombCode} + '-' + ${inputModel>/StoreLoca} + ' '}" wrapping="true"/>
 			</snappedHeading>
 			<actions>
-				<ObjectPageHeaderActionButton text="지점 등록" type="Emphasized" enabled="{inputModel>/editable}" visible="{inputModel>/editable}" hideText="false"/>
-				<ObjectPageHeaderActionButton text="운영 중지" type="Negative" enabled="{= !${inputModel>/editable}}" visible="{= !${inputModel>/editable}}" hideText="false" hideIcon="true"/>
+				<ObjectPageHeaderActionButton text="지점 등록" type="Emphasized" enabled="{inputModel>/editable}" visible="{inputModel>/editable}" hideText="false" press="onDeepCreate"/>
+				<ObjectPageHeaderActionButton text="운영 중지" type="Negative" enabled="{= !${inputModel>/editable}}" visible="{= !${inputModel>/editable}}" hideText="false" hideIcon="true" press="onDeepDelete"/>
 			</actions>
 			<navigationActions>
-				<ObjectPageHeaderActionButton icon="sap-icon://slim-arrow-up" type="Transparent" tooltip="slim-arrow-up"/>
-				<ObjectPageHeaderActionButton icon="sap-icon://slim-arrow-down" type="Transparent" tooltip="slim-arrow-down"/>
 			</navigationActions>
 			<content >
 				<m:GenericTag text="재고 부족 : " status="Success" press="onPressOpenPopover" design="StatusIconHidden">
@@ -64,7 +62,7 @@
 									<m:OverflowToolbar style="Clear">
 										<m:Title id="products" text="현재 재고"/>
 										<m:ToolbarSpacer/>
-										<m:Button text="전부 보충" type="Success"></m:Button>
+										<m:Button text="선택 보충" type="Accept" icon="sap-icon://add-activity-2" enabled="{= !${inputModel>/editable}}" visible="{= !${inputModel>/editable}}"></m:Button>
 										<m:ToggleButton text="Toggle Highlights" pressed="true" press="onHighlightToggle" visible="false"/>
 									</m:OverflowToolbar>
 								</t:extension>
@@ -98,14 +96,14 @@
 									<t:Column width="4rem" hAlign="Center">
 									<m:Text text="판매" />
 										<t:template>
-											<ObjectPageHeaderActionButton icon="sap-icon://negative">
+											<ObjectPageHeaderActionButton press=".onSale" icon="sap-icon://negative" enabled="{= !${inputModel>/editable}}">
 											</ObjectPageHeaderActionButton>
 										</t:template>
 									</t:Column>
 									<t:Column width="4rem" hAlign="Center">
 									<m:Text text="보충" />
 										<t:template>
-											<ObjectPageHeaderActionButton icon="sap-icon://add-product">
+											<ObjectPageHeaderActionButton icon="sap-icon://inbox" enabled="{= !${inputModel>/editable}}">
 											</ObjectPageHeaderActionButton>
 										</t:template>
 									</t:Column>
@@ -189,12 +187,14 @@
 											<m:Title id="title2" text="선택한 품목"/>
 											<m:ToolbarSpacer/>
 											<m:Button
-												icon="sap-icon://cart-4"
-												tooltip="선택항목 추가"
+												type="Accept"
+												icon="sap-icon://add-product"
+												tooltip="재고 추가"
 												press=".addStock"/>
 											<m:Button
+												type="Reject"
 												icon="sap-icon://reset"
-												tooltip="상품 초기화"
+												tooltip="선택 초기화"
 												press=".cartReset"/>
 										</m:OverflowToolbar>
 									</t:extension>
