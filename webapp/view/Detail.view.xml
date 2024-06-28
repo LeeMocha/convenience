@@ -25,8 +25,8 @@
 			<navigationActions>
 			</navigationActions>
 			<content >
-				<m:GenericTag text="재고 부족 : " status="Success" press="onPressOpenPopover" design="StatusIconHidden">
-					<m:ObjectNumber number="0" emptyIndicatorMode="Off"  unit="종"></m:ObjectNumber>
+				<m:GenericTag text="{= ${inputModel>/StocksStatus} ? '재고 부족 :' : '재고 없음' }" status="{inputModel>/StocksStatus}" press="onPressOpenPopover" design="StatusIconHidden">
+					<m:ObjectNumber number="{= ${inputModel>/ErrorStocks}>=0 ? ${inputModel>/ErrorStocks} : '' }" emptyIndicatorMode="Off"  unit="{= ${inputModel>/ErrorStocks}>=0 ? '종' : '' }"></m:ObjectNumber>
 				</m:GenericTag>
 			</content>
 		</ObjectPageDynamicHeaderTitle>
@@ -42,12 +42,12 @@
 			</layout:VerticalLayout>
 			<layout:VerticalLayout>
 				<m:ObjectAttribute title="현재 품목"/>
-				<m:ObjectNumber number="{= ${stockModel>/}.length }" emptyIndicatorMode="Off"  unit="종"></m:ObjectNumber>
+				<m:ObjectNumber number="{inputModel>/totalLength}" emptyIndicatorMode="Off"  unit="종"></m:ObjectNumber>
 			</layout:VerticalLayout>
 		</layout:HorizontalLayout>
 	</headerContent>
 		<sections>
-			<ObjectPageSection titleUppercase="false" id="presentStock" title="재고 현황" visible="{= ${stockModel>/}.length > 0 }" >
+			<ObjectPageSection titleUppercase="false" id="presentStock" title="재고 현황" >
 				<subSections>
 					<ObjectPageSubSection titleUppercase="false">
 						<blocks>
@@ -57,7 +57,8 @@
 										path: 'stockModel>/'
 								}"
 								selectionMode="MultiToggle"
-								ariaLabelledBy="title">
+								ariaLabelledBy="title"
+								noData="상품을 추가해 주십시오.">
 								<t:extension>
 									<m:OverflowToolbar style="Clear">
 										<m:Title id="products" text="현재 재고"/>
@@ -65,6 +66,32 @@
 										<m:Button text="선택 보충" type="Accept" icon="sap-icon://add-activity-2" enabled="{= !${inputModel>/editable}}" visible="{= !${inputModel>/editable}}"></m:Button>
 										<m:ToggleButton text="Toggle Highlights" pressed="true" press="onHighlightToggle" visible="false"/>
 									</m:OverflowToolbar>
+									<m:FacetFilter
+										id="facetFilter"
+										type="Simple"
+										showReset="true"
+										showPopoverOKButton="true"
+										reset="handleFacetFilterReset"
+										lists="{filterModel>/filters}">
+										<m:lists>
+											<m:FacetFilterList
+												title="{filterModel>type}"
+												key="{filterModel>type}"
+												mode="MultiSelect"
+												listClose="handleListClose"
+												items="{
+													path: 'filterModel>values',
+													templateShareable: false
+												}" >
+												<m:items>
+													<m:FacetFilterItem
+														text="{filterModel>StockStatus}"
+														key="{filterModel>StockStatus}"
+													/>
+												</m:items>
+											</m:FacetFilterList>
+										</m:lists>
+									</m:FacetFilter>
 								</t:extension>
 								<t:rowSettingsTemplate>
 									<t:RowSettings highlight="{stockModel>StockStatus}" highlightText="{stockModel>StockStatus}"/>
@@ -96,14 +123,14 @@
 									<t:Column width="4rem" hAlign="Center">
 									<m:Text text="판매" />
 										<t:template>
-											<ObjectPageHeaderActionButton press=".onSale" icon="sap-icon://negative" enabled="{= !${inputModel>/editable}}">
+											<ObjectPageHeaderActionButton press=".onSale" icon="sap-icon://negative" enabled="{= !${inputModel>/editable}}" >
 											</ObjectPageHeaderActionButton>
 										</t:template>
 									</t:Column>
 									<t:Column width="4rem" hAlign="Center">
 									<m:Text text="보충" />
 										<t:template>
-											<ObjectPageHeaderActionButton icon="sap-icon://inbox" enabled="{= !${inputModel>/editable}}">
+											<ObjectPageHeaderActionButton press=".onStore" icon="sap-icon://inbox" enabled="{= !${inputModel>/editable}}">
 											</ObjectPageHeaderActionButton>
 										</t:template>
 									</t:Column>
@@ -113,7 +140,7 @@
 					</ObjectPageSubSection>
 				</subSections>
 			</ObjectPageSection>
-			<ObjectPageSection titleUppercase="false" title="상품 추가하기">
+			<ObjectPageSection titleUppercase="false" title="상품 추가하기" id="addStock">
 				<subSections>
 					<ObjectPageSubSection titleUppercase="false">
 						<blocks>

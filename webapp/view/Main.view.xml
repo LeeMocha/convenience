@@ -78,7 +78,7 @@
                                 <Label text="{headModel>StoreName}" />
                             </t:template>
                         </t:Column>
-                        <t:Column sortProperty="StoreOwner" showSortMenuEntry="true">
+                        <t:Column sortProperty="StoreOwner" showSortMenuEntry="true" width="4rem">
                             <Label text="지점장" design="Bold"/>
                             <t:template>
                                 <Label text="{headModel>StoreOwner}" />
@@ -94,6 +94,14 @@
                             <Label text="전화번호" design="Bold"/>
                             <t:template>
                                 <Label text="{headModel>StorePhone}" />
+                            </t:template>
+                        </t:Column>
+                        <t:Column sortProperty="ErrorStocks" showSortMenuEntry="true">
+                            <Label text="재고 부족" design="Bold"/>
+                            <t:template>
+                                <GenericTag text="재고 부족 : " status="{headModel>StocksStatus}" press="onPressOpenPopover" design="StatusIconHidden">
+					                <ObjectNumber number="{headModel>ErrorStocks}" emptyIndicatorMode="Off"  unit="종"></ObjectNumber>
+				                </GenericTag>
                             </t:template>
                         </t:Column>
                     </t:columns>

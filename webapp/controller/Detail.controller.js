@@ -18,19 +18,23 @@ sap.ui.define([
     
             _onRouteMatched: function (oEvent) {
                 var oArgs = oEvent.getParameter("arguments");
-                this.Uuid = oArgs.Uuid ? JSON.parse(oArgs.Uuid) : undefined;
+                this.Uuid = oArgs.Uuid
                 this.inputData = oArgs.inputData ? JSON.parse(oArgs.inputData) : undefined;
                 
                 this.initData();
-
-                // 섹션 포커스 설정
-                this.oObjectPageLayout = this.getView().byId("ObjectPageLayout");
-                this.oEditAttrSection = this.getView().byId("presentStock");
-                this.oObjectPageLayout.setSelectedSection( this.oEditAttrSection.getId() );
             },
     
             initData: function() {
                 this.setModel(new JSONModel([]), 'cartModel');
+                if(!this.filterModel){
+                    this.filterModel = {
+                        filters : [{
+                            type : "상태 조회",
+                            values : [{StockStatus : 'Success'}, {StockStatus : 'Warning'}, {StockStatus : 'Error'}]
+                        }]
+                    }
+                    this.setModel(new JSONModel(this.filterModel), 'filterModel')
+                }
                 this.getStoreData()
                     .then(this.getProductData.bind(this)).then(()=>{
                         var SortOrder = CoreLibrary.SortOrder;
@@ -51,7 +55,7 @@ sap.ui.define([
                 
                         this._getODataRead(oMainModel, "/Head", aFilter, '$expand=to_Item')
                             .done(function(aGetData) {
-                                this.setModel(new JSONModel({ ...aGetData[0], editable: this.editable }), "inputModel");
+                                this.setModel(new JSONModel({ ...aGetData[0], editable: this.editable, totalLength : aGetData[0].to_Item.results.length }), "inputModel");
                                 this.setModel(new JSONModel(aGetData[0].to_Item.results), "stockModel");
                                 resolve(); // 성공적으로 데이터를 가져오면 resolve 호출
                             }.bind(this))
@@ -59,11 +63,24 @@ sap.ui.define([
                                 console.error('Failed to read store data');
                                 reject(); // 데이터를 가져오지 못하면 reject 호출
                             }.bind(this));
+                        
+                            // 섹션 포커스 설정
+                        this.oObjectPageLayout = this.getView().byId("ObjectPageLayout");
+                        this.oEditAttrSection = this.getView().byId("presentStock");
+                        this.oObjectPageLayout.setSelectedSection( this.oEditAttrSection.getId() );
+
                     } else {
                         this.editable = true;
-                        var oModel = new JSONModel({ ...this.inputData, editable: this.editable });
+                        var oModel = new JSONModel({ ...this.inputData, editable: this.editable, totalLength : 0});
                         this.setModel(oModel, "inputModel");
                         this.setModel(new JSONModel([]), 'stockModel');
+
+
+                        // 섹션 포커스 설정
+                        this.oObjectPageLayout = this.getView().byId("ObjectPageLayout");
+                        this.oEditAttrSection = this.getView().byId("addStock");
+                        this.oObjectPageLayout.setSelectedSection( this.oEditAttrSection.getId() );
+
                         resolve(); // 비동기 작업이 필요 없는 경우에도 resolve 호출
                     }
                 }.bind(this));
@@ -96,18 +113,18 @@ sap.ui.define([
                 }.bind(this));
             },
 
-            getStockData: function (){
+            getStockData: function (aFilter = []){
+                var that = this;
                 var oMainModel = this.getOwnerComponent().getModel();
-                var aFilter = [];
-                aFilter.push(new Filter("Uuid", "EQ", this.Uuid));
-                this._getODataRead(oMainModel, '/Head', aFilter, '$expand=to_Item').done(function (aGetData) {
-                    console.log(aGetData[0]);
-                    console.log(aGetData[0].to_Item.results)
-                    this.setModel(new JSONModel(aGetData[0]), "stockModel");
+                aFilter.push(new Filter("StoreUuid", "EQ", this.Uuid));
+                this._getODataRead(oMainModel, '/Item', aFilter).done(function (aGetData) {
+                    console.log(aGetData);
+                    this.setModel(new JSONModel(aGetData), "stockModel");
                 }.bind(this)).fail(function () {
                     MessageBox.information("Read Fail");
                 }).always(function () {
-
+                    var oTable = that.getView().byId("table");
+                    oTable.getBinding("rows").refresh();
                 });
             },
 
@@ -130,6 +147,7 @@ sap.ui.define([
                 })
 
                 delete headData.editable;
+                delete headData.totalLength;
                 headData.to_Item = newItems;
 
                 console.log(headData)
@@ -299,30 +317,110 @@ sap.ui.define([
 
             onSale: function(oEvent) {
                 var that = this;
-                var oMainModel = this.getOwnerComponent().getModel();
-                var selectedProduct = oEvent.getSource().getParent().getBindingContext("stockModel").getObject();
-                console.log(selectedProduct);
-
-                if(selectedProduct.ProductStock <= 0){
-                    MessageToast.show("재고가 부족합니다. 판매할 수 없습니다.");
+                var oMainModel = this.getOwnerComponent().getModel(); // stockModel 모델을 가져옵니다.
+                var stockModel = this.getModel('stockModel')
+                var selectedProductContext = oEvent.getSource().getParent().getBindingContext("stockModel");
+                var selectedProductPath = selectedProductContext.getPath();
+                var selectedProduct = selectedProductContext.getObject();
+            
+                if (selectedProduct.ProductStock <= 0) {
+                    sap.m.MessageToast.show("재고가 부족합니다. 판매할 수 없습니다.");
                     return;
                 }
-
-                --selectedProduct.ProductStock;
-
-                var itemUri = selectedProduct.__metadata.uri.substring(selectedProduct.__metadata.uri.indexOf("/Item("));
-                this._getODataUpdate(oMainModel, itemUri, selectedProduct).done(function(aReturn){
-								
-                }.bind(this)).fail(function(){
-                    MessageBox.information("Saleing Failed");
-                }).always(function(){
-                    var oTable = that.byId("table");
-                    var oBinding = oTable.getBinding("items") || oTable.getBinding("rows");
-                    if (oBinding) {
-                        oBinding.refresh();
+            
+                var params = {
+                    method: "POST",
+                    urlParameters: {
+                        Uuid: selectedProduct.Uuid,
+                        StoreUuid: selectedProduct.StoreUuid
+                    },
+                    success: function(oData, response) {
+                        // Update the ProductStock property in the model
+                        stockModel.setProperty(selectedProductPath + "/ProductStock", oData.ProductStock);
+                        stockModel.setProperty(selectedProductPath + "/StockStatus", oData.StockStatus);
+            
+                        // Refresh the table binding
+                        var oTable = that.getView().byId("table");
+                        oTable.getBinding("rows").refresh();
+            
+                        sap.m.MessageToast.show("판매가 완료되었습니다.");
+                    },
+                    error: function(oError) {
+                        sap.m.MessageToast.show("판매 중 오류가 발생했습니다.");
                     }
+                };
+            
+                oMainModel.callFunction("/doSale", params);
+            },
+
+            onStore: function(oEvent) {
+                var that = this;
+                var oMainModel = this.getOwnerComponent().getModel(); // stockModel 모델을 가져옵니다.
+                var stockModel = this.getModel('stockModel')
+                var selectedProductContext = oEvent.getSource().getParent().getBindingContext("stockModel");
+                var selectedProductPath = selectedProductContext.getPath();
+                var selectedProduct = selectedProductContext.getObject();
+            
+                if (selectedProduct.ProductStock >= 30) {
+                    sap.m.MessageToast.show("재고를 더 이상 보충 할 수 없습니다.");
+                    return;
+                }
+            
+                var params = {
+                    method: "POST",
+                    urlParameters: {
+                        Uuid: selectedProduct.Uuid,
+                        StoreUuid: selectedProduct.StoreUuid
+                    },
+                    success: function(oData, response) {
+                        // Update the ProductStock property in the model
+                        stockModel.setProperty(selectedProductPath + "/ProductStock", oData.ProductStock);
+                        stockModel.setProperty(selectedProductPath + "/StockStatus", oData.StockStatus);
+            
+                        // Refresh the table binding
+                        var oTable = that.getView().byId("table");
+                        oTable.getBinding("rows").refresh();
+            
+                        sap.m.MessageToast.show("입고 완료되었습니다.");
+                    },
+                    error: function(oError) {
+                        sap.m.MessageToast.show("입고 중 오류가 발생했습니다.");
+                    }
+                };
+            
+                oMainModel.callFunction("/doStore", params);
+            },
+
+            handleListClose: function(oEvent){
+                var oFacetFilter = Object.keys(oEvent.getSource().getSelectedKeys());
+                var filters = [];
+                var aFilter = [];
+    
+                console.log(oFacetFilter);
+    
+                oFacetFilter.map(StockStatus =>{ 
+                    filters.push(new Filter("StockStatus", "EQ", StockStatus));
+                })
+                
+                var finalFilter = new Filter({
+                    filters: filters,
+                    and: false
                 });
-            }
+    
+                aFilter.push(finalFilter);
+    
+                this.getStockData(aFilter);
+            },
+    
+            handleFacetFilterReset: function(){
+                var oFacetFilter = this.byId("facetFilter");
+                oFacetFilter.getLists().map(oList => {
+                    oList.setSelectedKeys();
+                });
+                this.getStockData();
+            },
+
+            
         });
     }
 )

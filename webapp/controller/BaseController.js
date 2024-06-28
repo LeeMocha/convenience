@@ -151,6 +151,55 @@ sap.ui.define([
 			return deferred.promise();
 		},
 
+		        /**
+         * Method to perform an OData POST request for a specific action.
+         * @public
+         * @param {sap.ui.model.odata.v2.ODataModel} oModel - The OData model instance.
+         * @param {string} actionContext - The context URI for the action.
+         * @param {object} oData - The data to be sent in the POST request.
+         * @returns {jQuery.Deferred} A jQuery Deferred promise that resolves or rejects based on the request outcome.
+         */
+		_postAction: function(oModel, actionContext, actionName) {
+			var deferred = $.Deferred();
+
+			// Fetch CSRF token using the service root URL
+			oModel.setHeaders({"X-CSRF-Token": "Fetch"});
+
+
+
+			oModel.create(actionContext+actionName, {
+				success: function(data, response) {
+					var csrfToken = response.headers['x-csrf-token'];
+					// Make POST request to action
+					$.ajax({
+						url: actionContext + actionName,
+						method: "POST",
+						headers: {
+							"X-CSRF-Token": csrfToken,
+							"Content-Type": "application/json"
+						},
+						success: function(oReturn) {
+							deferred.resolve(oReturn);
+						},
+						error: function(oError) {
+							deferred.reject(oError);
+							try {
+								var oResponseTextData = JSON.parse(oError.responseText);
+								MessageToast.show(oResponseTextData.error.message.value);
+							} catch(e) {
+								MessageToast.show(oError.message + "_" + oError.statusCode);
+							}
+						}
+					});
+				},
+				error: function(oError) {
+					deferred.reject(oError);
+				}
+			});
+
+			return deferred.promise();
+		},
+
 		navTo: function (psTarget, pmParameters) {
 			this.getRouter().navTo(psTarget, pmParameters);
 		},

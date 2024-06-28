@@ -343,9 +343,9 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
         },
 		
 		onMove: function(oEvent) {
-			console.log(oEvent.getSource().getParent().getBindingContext("headModel").getObject())
+			var Uuid = oEvent.getSource().getParent().getBindingContext("headModel").getObject().Uuid
 			this.navTo('Detail', {
-				Uuid : JSON.stringify(oEvent.getSource().getParent().getBindingContext("headModel").getObject().Uuid)
+				Uuid : Uuid
 			});
 		},
 
