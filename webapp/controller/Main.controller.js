@@ -398,7 +398,17 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
 								}.bind(this)).fail(()=>{
 									MessageBox.information("Delete Fail");
 								}).then(()=>{
-									MessageBox.alert('정상적으로 폐업 처리 되었습니다.', { onClose : ()=>that.navTo("Main", {})})
+									MessageBox.alert('정상적으로 폐업 처리 되었습니다.', { onClose : ()=>{
+										that.getData();
+										// 모델 리프레시
+										that.getModel('headModel').refresh();
+										that.getModel('combModel').refresh();
+										// 변수 초기화
+										sSelectedKey = '';
+										sSelectedTxt = '';
+										// 콤보박스 선택 초기화
+										oCombSelect.setSelectedKey('');
+									}})
 								})	
 							}
 						})
