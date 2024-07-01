@@ -42,7 +42,7 @@
 			</layout:VerticalLayout>
 			<layout:VerticalLayout>
 				<m:ObjectAttribute title="현재 품목"/>
-				<m:ObjectNumber number="{inputModel>/totalLength}" emptyIndicatorMode="Off"  unit="종"></m:ObjectNumber>
+				<m:ObjectNumber number="{inputModel>/totalLength}" state="Information" emptyIndicatorMode="Off"  unit="종"></m:ObjectNumber>
 			</layout:VerticalLayout>
 		</layout:HorizontalLayout>
 	</headerContent>
@@ -58,15 +58,32 @@
 								}"
 								selectionMode="MultiToggle"
 								ariaLabelledBy="title"
-								noData="상품을 추가해 주십시오.">
+								noData="{= ${inputModel>/editable} ? '상품을 추가해 주십시오.' : '조회된 데이터가 없습니다.'}">
 								<t:extension>
 									<m:OverflowToolbar style="Clear">
 										<m:Title id="products" text="현재 재고"/>
 										<m:ToolbarSpacer/>
-										<m:Button text="선택 보충" type="Accept" icon="sap-icon://add-activity-2" enabled="{= !${inputModel>/editable}}" visible="{= !${inputModel>/editable}}"></m:Button>
+										<!-- <m:Button text="선택 보충" type="Accept" icon="sap-icon://add-activity-2" enabled="{= !${inputModel>/editable}}" visible="{= !${inputModel>/editable}}"></m:Button> -->
 										<m:ToggleButton text="Toggle Highlights" pressed="true" press="onHighlightToggle" visible="false"/>
 									</m:OverflowToolbar>
-									<m:FacetFilter
+									<m:HBox >
+										<m:MultiInput width="14rem"
+											id="multiInput"
+											suggestionItems="{path: 'searchModel>/'}"
+											valueHelpRequest="handleValueHelp"
+											change="buseoChange"
+											tokenUpdate="onTokenUpdate"
+											enabled="{= !${inputModel>/editable} }"
+											visible="{= !${inputModel>/editable} }"
+											>
+											<m:tokens>
+												<m:Token  text="{searchModel>StockStstus}" ></m:Token>
+											</m:tokens>
+											<c:Item  text="{searchModel>StockStstus}" />
+										</m:MultiInput>
+										<m:Button text="조회" press=".onSearch" type="Default" enabled="{= !${inputModel>/editable} }" visible="{= !${inputModel>/editable} }"></m:Button>
+									</m:HBox>
+									<!-- <m:FacetFilter
 										id="facetFilter"
 										type="Simple"
 										showReset="true"
@@ -91,7 +108,7 @@
 												</m:items>
 											</m:FacetFilterList>
 										</m:lists>
-									</m:FacetFilter>
+									</m:FacetFilter> -->
 								</t:extension>
 								<t:rowSettingsTemplate>
 									<t:RowSettings highlight="{stockModel>StockStatus}" highlightText="{stockModel>StockStatus}"/>

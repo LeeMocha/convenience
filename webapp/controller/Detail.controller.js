@@ -7,8 +7,10 @@ sap.ui.define([
     "sap/ui/table/RowSettings",
     "sap/ui/core/library",
     "sap/m/MessageBox",
+    'sap/ui/core/Fragment',
+    'sap/m/Token',
 ],
-    function (Controller, JSONModel, Filter, MessageToast, Sorter, RowSettings, CoreLibrary, MessageBox) {
+    function (Controller, JSONModel, Filter, MessageToast, Sorter, RowSettings, CoreLibrary, MessageBox, Fragment, Token) {
         "use strict";
         
         return Controller.extend("convenience.controller.Detail", {
@@ -26,6 +28,8 @@ sap.ui.define([
     
             initData: function() {
                 this.setModel(new JSONModel([]), 'cartModel');
+                this.setModel(new JSONModel({StockStatus : []}),"searchModel");
+                this.byId("multiInput").setTokens([]);
                 if(!this.filterModel){
                     this.filterModel = {
                         filters : [{
@@ -123,8 +127,9 @@ sap.ui.define([
                 }.bind(this)).fail(function () {
                     MessageBox.information("Read Fail");
                 }).always(function () {
-                    var oTable = that.getView().byId("table");
-                    oTable.getBinding("rows").refresh();
+                    var SortOrder = CoreLibrary.SortOrder;
+                    var oProductNameColumn1 = that.getView().byId("ProductCode1");
+                    that.getView().byId("table").sort(oProductNameColumn1, SortOrder.Ascending);
                 });
             },
 
@@ -167,20 +172,36 @@ sap.ui.define([
             },
 
             onDeepDelete: function() {
+                var that = this;
                 var oMainModel = this.getOwnerComponent().getModel();
-                this._getODataDelete(oMainModel, "/Head(guid'"+ this.Uuid +"')").done(function(aReturn){
-                }.bind(this)).fail(()=>{
-                    MessageBox.information("Delete Fail");
-                }).then(()=>{
-                    this.navTo('Main', {})
-                })
-   
+                var headData = this.getModel('inputModel').getData();
+
+                MessageBox.warning("해당 지점(" + headData.StoreName + ")을 영업 중지 처리 합니다. 해당 지점의 모든 정보가 사라집니다.", {
+                    actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
+                    emphasizedAction: MessageBox.Action.OK,
+                    onClose: function (sAction) {
+                        if(sAction === 'OK'){
+                            that._getODataDelete(oMainModel, "/Head(guid'"+ that.Uuid +"')").done(function(aReturn){
+                            }.bind(this)).fail(()=>{
+                                MessageBox.information("Delete Fail");
+                            }).then(()=>{
+                                MessageBox.alert('정상적으로 영업 중지 처리 되었습니다.', { onClose : ()=>{
+                                    that.navTo('Main', {})
+                                }})
+                            })            
+                        }
+                    },
+                    dependentOn: this.getView()
+                });
+
             },
 
             addStock: function (){
                 var oMainModel = this.getOwnerComponent().getModel();
                 var cartData = this.getModel('cartModel').getData();
                 var headData = this.getModel("inputModel").getData();
+                this.oObjectPageLayout = this.getView().byId("ObjectPageLayout");
+                this.oEditAttrSection = this.getView().byId("presentStock");
 
                 if(cartData.length <= 0) {
                     MessageToast.show("선택하신 상품이 없습니다.");
@@ -208,6 +229,8 @@ sap.ui.define([
                                         MessageBox.information("Create Fail");
                                     }).always(()=>{
                                         that.initData();
+                                        // 섹션 포커스 설정
+                                        this.oObjectPageLayout.setSelectedSection( this.oEditAttrSection.getId() );
                                     })
                                 })
                             }
@@ -226,16 +249,14 @@ sap.ui.define([
                     })
                     this.setModel(new JSONModel(presentStock), 'stockModel');
                     this.setModel(new JSONModel([]), 'cartModel');
+                    // 섹션 포커스 설정
+                    this.oObjectPageLayout.setSelectedSection( this.oEditAttrSection.getId() );
+
                 }
 
                 var SortOrder = CoreLibrary.SortOrder;
                 var oProductNameColumn1 = this.getView().byId("ProductCode1");
                 this.getView().byId("table").sort(oProductNameColumn1, SortOrder.Ascending);
-
-                // 섹션 포커스 설정
-                this.oObjectPageLayout = this.getView().byId("ObjectPageLayout");
-                this.oEditAttrSection = this.getView().byId("presentStock");
-                this.oObjectPageLayout.setSelectedSection( this.oEditAttrSection.getId() );
 
             },
 
@@ -420,7 +441,106 @@ sap.ui.define([
                 this.getStockData();
             },
 
-            
+            handleValueHelp: function(oEvent) {
+                var sInputValue = oEvent.getSource().getValue();
+                // 프래그먼트를 로드하고 Dialog를 생성
+                if (!this._pValueHelpDialog) {
+                    this._pValueHelpDialog = Fragment.load({
+                        id: this.getView().getId(),
+                        name: "convenience.view.Dialog.StockStatus",
+                        controller: this
+                    }).then(function(oDialog){
+                        this.getView().addDependent(oDialog);
+                        return oDialog;
+                    }.bind(this));
+                }
+    
+                this._pValueHelpDialog.then(function(oDialog) {
+                    // 모델을 설정하고 Dialog 열기
+                    oDialog.setModel(new JSONModel([{StockStatus : 'Success'}, {StockStatus : 'Warning'}, {StockStatus : 'Error'}]), "valueHelpModel");
+                    oDialog.open(sInputValue);
+                }.bind(this));
+            },
+
+            _handleValueHelpSearch: function(oEvent) {
+                var sValue = oEvent.getParameter("value");
+                var oFilter = new Filter("StockStatus", FilterOperator.Contains, sValue);
+                oEvent.getSource().getBinding("items").filter([oFilter]);
+            },
+    
+            _handleValueHelpClose: function(oEvent) {
+                var aSelectedItems = oEvent.getParameter("selectedItems");
+                if (aSelectedItems) {
+                    var aTokens = aSelectedItems.map(oItem => {
+                        return new Token({
+                            text: oItem.getBindingContext("valueHelpModel").getProperty("StockStatus")
+                        });
+                    });
+                    var oMultiInput = this.byId("multiInput");
+                    oMultiInput.setTokens(aTokens);
+                    var StockStatus = aSelectedItems.map(function(oItem) {
+                        return oItem.getBindingContext("valueHelpModel").getProperty("StockStatus");
+                    });
+                    this.setModel(new JSONModel({StockStatus: StockStatus}),"searchModel");
+                }
+                oEvent.getSource().getBinding("items").filter([]);
+            },
+
+            tokenDelete : function(oEvent) {
+                var oToken = oEvent.getParameter("token"); // 삭제할 토큰 객체
+                var sStockStatusToDelete = oToken.getText(); // 토큰의 텍스트 값 (Butxt)
+                console.log(sStockStatusToDelete);
+                // searchModel 가져오기
+                var oModel = this.getModel("searchModel");
+                var aStockStatus = oModel.getProperty("/StockStatus");
+                console.log(aStockStatus);
+    
+                // Buname 배열에서 해당 Butxt 값을 가진 요소 제거
+                var iIndex = aStockStatus.indexOf(sStockStatusToDelete);
+                if (iIndex !== -1) {
+                    aStockStatus.splice(iIndex, 1);
+                    oModel.setProperty("/StockStatus", aStockStatus);
+                }
+    
+                // 모델 업데이트
+                oModel.refresh();
+            },
+    
+            onTokenUpdate: function(oEvent) {
+                var aRemovedTokens = oEvent.getParameter("removedTokens");
+    
+                if (aRemovedTokens && aRemovedTokens.length > 0) {
+                    aRemovedTokens.forEach(function(oToken) {
+                        this.tokenDelete({ getParameter: function() { return oToken; } });
+                    }.bind(this));
+                }
+            },
+    
+            onSearch: function(){
+                var searchDatas = this.getModel('searchModel').getData();
+                var filters = [];
+                var aFilter = [];
+    
+                console.log(searchDatas.StockStatus);
+    
+                if(searchDatas.StockStatus.length > 0){
+                    searchDatas.StockStatus.map(searchData =>{ 
+                        filters.push(new Filter("StockStatus", "EQ", searchData));
+                    })
+                    
+                    var finalFilter = new Filter({
+                        filters: filters,
+                        and: false
+                    });
+
+                    aFilter.push(finalFilter);
+                }
+
+    
+                this.getStockData(aFilter);
+
+            }
+
         });
     }
 )

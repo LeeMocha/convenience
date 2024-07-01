@@ -25,13 +25,7 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
         },
 
         initData: function (){
-            this.getData()
-        },
-
-        getData: function (aFilter = []){
-            var oCombModel = this.getOwnerComponent().getModel('Comb');
-            var oheadModel = this.getOwnerComponent().getModel();
-
+			
             this.setModel(new JSONModel({
                 CombCode : undefined,
                 StoreOwner : '',
@@ -45,7 +39,17 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
                 dataLength : 0,
                 filters : []
             }), 'searchModel');
+			
+            this.getData()
+        },
 
+        getData: function (aFilter = []){
+			this.getCombData();
+            this.getHeadData(aFilter);
+        },
+
+		getCombData: function() {
+			var oCombModel = this.getOwnerComponent().getModel('Comb');
             this._getODataRead(oCombModel, '/Comb').done(function(aGetData){
                 console.log(aGetData);
                 this.setModel(new JSONModel(aGetData), "combModel")
@@ -53,7 +57,7 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
                     this.filterModel = {
                         filters : [{
                             type : "브랜드명",
-                            values : aGetData
+                            values : aGetData,
                         }]
                     }
                     this.setModel(new JSONModel(this.filterModel), 'filterModel')
@@ -62,8 +66,11 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
                 MessageBox.information("Read Fail");
             }).always(function(){
             });
+		},
 
-            this._getODataRead(oheadModel, '/Head', aFilter).done(function(aGetData){
+		getHeadData: function(aFilter) {
+			var oheadModel = this.getOwnerComponent().getModel();
+			this._getODataRead(oheadModel, '/Head', aFilter).done(function(aGetData){
                 console.log(aGetData);
                 this.setModel(new JSONModel(aGetData), "headModel");
                 this.setProperty('searchModel', 'dataLength', aGetData.length);
@@ -71,7 +78,7 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
                 MessageBox.information("Read Fail");
             }).always(function(){
             });
-        },
+		},
 
         handleListClose: function(oEvent){
             var oFacetFilter = Object.keys(oEvent.getSource().getSelectedKeys());
@@ -95,7 +102,8 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
         },
 
         handleFacetFilterReset: function(){
-            var oFacetFilter = this.byId("facetFilter");
+			var oFacetFilter = this.byId("facetFilter");
+			console.log(oFacetFilter.getLists())
             oFacetFilter.getLists().map(oList => {
                 oList.setSelectedKeys();
             });
@@ -355,45 +363,8 @@ function (Controller, JSONModel, Filter, FilterOperator, MessagePopover, Message
 			var sSelectedTxt = oCombSelect.getSelectedItem().getText();
 			var that = this;
 
-			MessageBox.warning("해당 브랜드(" + sSelectedTxt + ")를 폐업 처리 합니다. 해당 브랜드의 모든 지점에 대한 정보가 사라집니다.", {
-				actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
-				emphasizedAction: MessageBox.Action.OK,
-				onClose: function (sAction) {
-					if(sAction === 'OK'){
-						var headData = that.getModel('headModel').getData();
-						var combData = that.getModel('combModel').getData();
-						var oMainModel = that.getOwnerComponent().getModel();
-						var oCombModel = that.getOwnerComponent().getModel('Comb');
+			
 
-						combData.map(comb => {
-							if(comb.CombCode === sSelectedKey){
-								comb.CombStatus = 'X';
-								that._getODataUpdate(oCombModel, "/Comb(guid'"+ comb.Uuid +"')", comb).done(function(aReturn){
-								
-									}.bind(this)).fail(function(){
-										// chk = false;
-									}).always(function(){
-						
-								});
-							}
-						})
-
-						headData.map(store => {
-							if( store.CombCode === sSelectedKey ){
-								that._getODataDelete(oMainModel, "/Head(guid'"+ store.Uuid +"')").done(function(aReturn){
-								}.bind(this)).fail(()=>{
-									MessageBox.information("Delete Fail");
-								}).then(()=>{
-									MessageBox.alert('정상적으로 폐업 처리 되었습니다.', { onClose : ()=>that.navTo("Main", {})})
-								})	
-							}
-						})
-					}
-				},
-				dependentOn: this.getView()
-			});
-
-		}
-
+		},
     });
 });
